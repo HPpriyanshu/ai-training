@@ -11,7 +11,8 @@ const envSchema = z.object({
   API_KEY: z.string().min(1, "API_KEY is required").default("your-default-secret-key"),
   REDIS_HOST: z.string().default("127.0.0.1"),
   REDIS_PORT: z.string().default("6379"),
-  OPENAI_KEY: z.string().min(1,"Open ai key is required")
+  OPENAI_KEY: z.string().min(1,"Open ai key is required"),
+  DATABASE_URL: z.string().min(1, "Database url is required")
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
