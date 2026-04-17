@@ -1,9 +1,18 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { processChat } from "../services/chat.service.js";
+import { deleteHistoryService, getHistoryService, getUsageService, processChat } from "../services/chat.service.js";
 
 type chatBody = {
     message : string,
     sessionId : string
+}
+
+type paramsType = {
+    sessionId : string,
+}
+
+type queryType = {
+    page? : string,
+    limit?: string
 }
 
 export const chatStream = async (req : FastifyRequest<{Body: chatBody}>, reply : FastifyReply) => {
@@ -48,5 +57,55 @@ export const chatStream = async (req : FastifyRequest<{Body: chatBody}>, reply :
             reply.raw.write(`data: ${JSON.stringify({type : "error", message : "Something went wrong"})}\n\n`)
             reply.raw.end()
         } catch{}
+    }
+}
+
+//! get history
+export const getHistoryController = async (req : FastifyRequest<{Params : paramsType, Querystring : queryType}>, reply : FastifyReply) => {
+
+    try {
+        
+        const sessionId = req.params.sessionId
+        console.log(req.params, "        paramssss")
+        console.log(sessionId, "     reydecjoiewvehebfduehihe")
+        const {page = '1', limit = '10'} = req.query
+    
+        req.log.info({sessionId}, "Fetching chat history")
+    
+        const data = await getHistoryService({sessionId, page, limit})
+    
+        return reply.code(200).send(data)
+    } catch (error) {
+        req.log.error({error}, "History fetch failed")
+        return reply.code(500).send({error : "Failed to fetch history"})
+    }
+}
+
+//! delete history
+export const deleteHistoryController = async (req: FastifyRequest<{Params : paramsType}>, reply : FastifyReply) => {
+    try {
+        const sessionId = req.params.sessionId
+
+        const data = await deleteHistoryService(sessionId)
+
+        return reply.send(data)
+    } catch (error) {
+        req.log.error({error}, "Delete Failed")
+        return reply.code(500).send({error : "failed to delete chat history"})
+    }
+}
+
+//! get usage
+export const getUsageController = async (req : FastifyRequest<{Params : paramsType}>, reply : FastifyReply) => {
+    try {
+        const sessionId = req.params.sessionId
+
+        const data = await getUsageService(sessionId)
+
+        return reply.code(200).send(data)
+
+    } catch (error) {
+        req.log.error({error}, "Usage fetch failed")
+        return reply.code(500).send({error : "Failed to fetch usage"})
     }
 }
