@@ -1,43 +1,43 @@
 import { logger } from "../utils/logger.js"
-import {redis} from "../utils/redis.js"
+import { redis } from "../utils/redis.js"
 import { streamLLM } from "./openai.service.js"
 import { countTokens } from "../utils/tokenizer.js"
-import {prisma} from "../utils/db.js"
+import { prisma } from "../utils/db.js"
 
 type Message = {
-    role : "user" | "assistant",
-    content : string
+    role: "user" | "assistant",
+    content: string
 }
 
 type GetHistoryInput = {
-    sessionId : string,
-    page : string,
-    limit : string
+    sessionId: string,
+    page: string,
+    limit: string
 }
 
-export const processChat = async (sessionId : string, message : string, correlationId: string, onChunk : (chunk : string) => void) => {
+export const processChat = async (sessionId: string, message: string, correlationId: string, onChunk: (chunk: string) => void) => {
 
-    logger.info({ requestId : correlationId }, "Processing chat");
+    logger.info({ requestId: correlationId }, "Processing chat");
 
     //! cache data (redis)
     let history: Message[] = []
 
     const cached = await redis.lrange(sessionId, 0, -1)
 
-    if(cached.length > 0){
+    if (cached.length > 0) {
         history = cached.map((item: string) => JSON.parse(item))
     }
-    else{
+    else {
         //! fallback to db
         const historyFromDb = await prisma.chat.findMany({
-            where : {sessionId},
-            orderBy : {createdAt : "asc"},
-            take : 15
+            where: { sessionId },
+            orderBy: { createdAt: "asc" },
+            take: 15
         })
 
         history = historyFromDb.map(m => ({
             role: m.role as "user" | "assistant",
-            content : m.content
+            content: m.content
         }))
     }
 
@@ -46,13 +46,13 @@ export const processChat = async (sessionId : string, message : string, correlat
     const currentCount = await redis.incr(chatLimit)
 
     //! check expiry
-    if(currentCount ==1){
+    if (currentCount == 1) {
         await redis.expire(chatLimit, 86400)
     }
 
     const daily_chat = 10
 
-    if(currentCount > daily_chat){
+    if (currentCount > daily_chat) {
         const ttl = await redis.ttl(chatLimit)
 
         const hours = Math.floor(ttl / 3600)
@@ -68,15 +68,15 @@ export const processChat = async (sessionId : string, message : string, correlat
         }, "Daily chat limit exceed")
 
         onChunk(JSON.stringify({
-            type : "error",
-            message : `Daily limit exceed. Try again in ${hours}h ${minutes}m`
+            type: "error",
+            message: `Daily limit exceed. Try again in ${hours}h ${minutes}m`
         }))
 
         return
     }
 
     //! count input token
-    const inputText = [...history, {role : "user", content : message}].map(m => m.content).join(" ")
+    const inputText = [...history, { role: "user", content: message }].map(m => m.content).join(" ")
     const inputTokens = countTokens(inputText)
 
     logger.info({ requestId: correlationId, inputTokens }, "Input tokens")
@@ -88,20 +88,20 @@ export const processChat = async (sessionId : string, message : string, correlat
 
     const MAX_TOKENS = 100000
 
-    if(usedTokens + inputTokens > MAX_TOKENS){
+    if (usedTokens + inputTokens > MAX_TOKENS) {
         throw new Error("Token Limit Exceed")
     }
 
     //! Add user message
     history.push({
-        role : "user",
-        content : message
+        role: "user",
+        content: message
     })
 
     let fullResponse = ""
 
     //! call openai service
-    await streamLLM(history, (chunk : string) => {
+    await streamLLM(history, (chunk: string) => {
         fullResponse += chunk
         onChunk(chunk)
     })
@@ -109,8 +109,8 @@ export const processChat = async (sessionId : string, message : string, correlat
     //! count output token
     const outputTokens = countTokens(fullResponse)
 
-    
-    
+
+
     logger.info({ requestId: correlationId, outputTokens }, "Output tokens")
 
     //! total usage update (after LLM call)
@@ -125,17 +125,17 @@ export const processChat = async (sessionId : string, message : string, correlat
 
     const remainingTokens = MAX_TOKENS - newUsage
 
-    logger.info({requestId : correlationId, usedTokens : newUsage, remainingTokens}, "Token usage update")
+    logger.info({ requestId: correlationId, usedTokens: newUsage, remainingTokens }, "Token usage update")
 
     //! save assistant response
     history.push({
-        role : "assistant",
-        content : fullResponse
+        role: "assistant",
+        content: fullResponse
     })
 
     //! save message in DB
     await prisma.chat.createMany({
-        data : [
+        data: [
             {
                 sessionId,
                 role: "user",
@@ -150,61 +150,61 @@ export const processChat = async (sessionId : string, message : string, correlat
     })
 
     //! store in redis (instead of overwriting full json)
-   await redis.rpush(
-    sessionId,
-    JSON.stringify({role: "user", content: message})
-   )
+    await redis.rpush(
+        sessionId,
+        JSON.stringify({ role: "user", content: message })
+    )
 
-   await redis.rpush(
-    sessionId,
-    JSON.stringify({role: "assistant", content: fullResponse})
-   )
+    await redis.rpush(
+        sessionId,
+        JSON.stringify({ role: "assistant", content: fullResponse })
+    )
 
-   //! keep ony last 15 msg
-   await redis.ltrim(sessionId, -15, -1)
+    //! keep ony last 15 msg
+    await redis.ltrim(sessionId, -15, -1)
 
-   //! reset TTL
-   await redis.expire(sessionId, 86400)
+    //! reset TTL
+    await redis.expire(sessionId, 86400)
 }
 
 //! get history
-export const getHistoryService = async ({sessionId, page, limit}: GetHistoryInput) => {
-    logger.info({sessionId}, "DB fetching chat history")
+export const getHistoryService = async ({ sessionId, page, limit }: GetHistoryInput) => {
+    logger.info({ sessionId }, "DB fetching chat history")
 
     const pageNumber = parseInt(page)
     const limitNumber = parseInt(limit)
     const skip = (pageNumber - 1) * limitNumber
 
     const [chats, total] = await Promise.all([
-       prisma.chat.findMany({
-        where : {sessionId},
-        skip,
-        take : limitNumber,
-        orderBy : {createdAt : "asc"}
-       }),
+        prisma.chat.findMany({
+            where: { sessionId },
+            skip,
+            take: limitNumber,
+            orderBy: { createdAt: "asc" }
+        }),
 
-       prisma.chat.count({
-        where : {sessionId},
-        skip,
-        take : limitNumber
-       })
+        prisma.chat.count({
+            where: { sessionId },
+            skip,
+            take: limitNumber
+        })
     ])
 
     return {
-        page : pageNumber,
-        limit : limitNumber,
-        total,        
-        totalPages : Math.ceil(total / limitNumber),
-        history : chats
+        page: pageNumber,
+        limit: limitNumber,
+        total,
+        totalPages: Math.ceil(total / limitNumber),
+        history: chats
     }
 }
 
 //! delete history
-export const deleteHistoryService = async (sessionId : string) => {
-    logger.warn({sessionId}, "Deleting chat from DB + Redis")
+export const deleteHistoryService = async (sessionId: string) => {
+    logger.warn({ sessionId }, "Deleting chat from DB + Redis")
 
     await prisma.chat.deleteMany({
-        where : {sessionId}
+        where: { sessionId }
     })
 
     await redis.del(sessionId)
@@ -212,14 +212,14 @@ export const deleteHistoryService = async (sessionId : string) => {
     await redis.del(`chat_limit:${sessionId}`)
 
     return {
-        message : "Chat session cleared",
+        message: "Chat session cleared",
         sessionId
     }
 }
 
 //! get usage
-export const getUsageService = async (sessionId : string) => {
-    logger.info({sessionId}, "Fething token usage")
+export const getUsageService = async (sessionId: string) => {
+    logger.info({ sessionId }, "Fething token usage")
 
     const usageKey = `uasgeKey:${sessionId}`
 
