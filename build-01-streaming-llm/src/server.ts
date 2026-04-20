@@ -15,17 +15,9 @@ import { logger } from "./utils/logger.js";
 const fastify = Fastify({
   logger: false,
   loggerInstance: logger,
-
   requestIdLogLabel: "requestId",
-
-  // disableRequestLogging: true,
-
   genReqId: (req) => typeof req.headers["x-request-id"] === "string" ? req.headers["x-request-id"] : uuidv4()
 });
-
-// fastify.addHook("onRequest", async (req, reply) => {
-//   reply.header("X-Correlation-ID", req.id)
-// })
 
 // Augment FastifyInstance with Config type
 declare module "fastify" {
@@ -49,7 +41,7 @@ const start = async () => {
     await fastify.register(healthRoutes);
     await fastify.register(initialRoute, { prefix: "/api/v1" });
 
-    // 3. Start the server
+    // 4. Start the server
     const { PORT, HOST } = fastify.config;
     await fastify.listen({ port: PORT, host: HOST });
 
@@ -74,3 +66,4 @@ signals.forEach((signal) => {
 });
 
 start();
+
