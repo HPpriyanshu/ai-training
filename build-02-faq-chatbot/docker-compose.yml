@@ -1,0 +1,32 @@
+services:
+  # --- Infrastructure ---
+  redis:
+    image: redis:7-alpine
+    container_name: ai-training-redis-02
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:    
+    image: postgres:15
+    container_name: ai-training-DB-02
+    restart: always
+    environment:
+      POSTGRES_USER: Postgres
+      POSTGRES_PASSWORD: Postgres
+      POSTGRES_DB: chatdb
+    ports:   
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
+
+volumes:
+  redis_data:      
+  postgres_data:
