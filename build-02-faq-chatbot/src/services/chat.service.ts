@@ -5,6 +5,8 @@ import { countTokens } from "../utils/tokenizer.js"
 import { prisma } from "../utils/db.js"
 import { buildPrompt, loadPrompt } from "../utils/prompt-loader.js"
 import { FAQs } from "../data/faq.js"
+import { containsSensitiveData } from "../utils/leak-check.js"
+import { formatFaq } from "../utils/faq-formatter.js"
 
 type Message = {
     role: "user" | "assistant" | "system",
@@ -27,7 +29,7 @@ export const processChat = async (sessionId: string, message: string, correlatio
     
     const systemPrompt = buildPrompt(systemTemplate, {
         company_name : "My Company",
-        faq_content: FAQs
+        faq_content: formatFaq()
     })
     
     //! enrich user prompt
@@ -54,39 +56,6 @@ export const processChat = async (sessionId: string, message: string, correlatio
             content: m.content
         }))
     }
-    //! check daily chat limit
-    const chatLimit = `chat_limit:${sessionId}`
-    const currentCount = await redis.incr(chatLimit)
-
-    //! check expiry
-    if (currentCount == 1) {
-        await redis.expire(chatLimit, 86400)
-    }
-
-    const daily_chat = 100
-
-    if (currentCount > daily_chat) {
-        const ttl = await redis.ttl(chatLimit)
-
-        const hours = Math.floor(ttl / 3600)
-        const minutes = Math.floor((ttl % 3600) / 60)
-
-        //! log limit exceed
-        logger.warn({
-            requestId: correlationId,
-            currentCount,
-            ttl,
-            hours,
-            minutes
-        }, "Daily chat limit exceed")
-
-        onChunk(JSON.stringify({
-            type: "error",
-            message: `Daily limit exceed. Try again in ${hours}h ${minutes}m`
-        }))
-
-        return
-    }
 
     //! count input token
     const inputText = [...history, { role: "user", content: message }].map(m => m.content).join(" ")
@@ -112,6 +81,8 @@ export const processChat = async (sessionId: string, message: string, correlatio
     })
 
     let fullResponse = ""
+    let buffer = ""
+    let blocked = false
 
     //! add system prompt to llm input
     const finalMessage: Message[] = [
@@ -124,14 +95,32 @@ export const processChat = async (sessionId: string, message: string, correlatio
 
     //! call openai service
     await streamLLM(finalMessage, (chunk: string) => {
+        if(blocked) return
         fullResponse += chunk
-        onChunk(chunk)
+        buffer += chunk
+
+        //? check every 20 character (sensitive data check)
+        if(buffer.length > 20){
+
+            if(containsSensitiveData(buffer)){
+                blocked = true
+                logger.error({requestId : correlationId}, "Sensitive data leak detected")
+
+                onChunk("Sorry, I can't share that information")
+                buffer = ""
+                return
+            }
+
+            onChunk(buffer)
+            buffer = ""
+        }
     })
+    if(!blocked && buffer.length> 0){
+        onChunk(buffer)
+    }
 
     //! count output token
     const outputTokens = countTokens(fullResponse)
-
-
 
     logger.info({ requestId: correlationId, outputTokens }, "Output tokens")
 
@@ -156,17 +145,20 @@ export const processChat = async (sessionId: string, message: string, correlatio
     })
 
     //! save message in DB
+    const newDate = Date.now()
     await prisma.chat.createMany({
         data: [
             {
                 sessionId,
                 role: "user",
-                content: message
+                content: message,
+                createdAt :new Date(newDate - 1)
             },
             {
                 sessionId,
                 role: "assistant",
-                content: fullResponse
+                content: fullResponse,
+                createdAt : new Date()
             }
         ]
     })

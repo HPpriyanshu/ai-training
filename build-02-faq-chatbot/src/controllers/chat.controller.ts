@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { deleteHistoryService, getHistoryService, getUsageService, processChat } from "../services/chat.service.js";
+import { unmaskPII } from "../utils/pii-mask-unmask.js";
 
 type chatBody = {
     message: string,
@@ -43,7 +44,11 @@ export const chatStream = async (req: FastifyRequest<{ Body: chatBody }>, reply:
         })
 
         await processChat(sessionId, message, req.id, (chunk: string) => {
-            reply.raw.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`)
+
+            //! unmask PII
+            const restore = unmaskPII(chunk, req.piiMap || {})
+
+            reply.raw.write(`data: ${JSON.stringify({ type: "chunk", content: restore })}\n\n`)
         })
 
         req.log.info("Chat completed successfully")
