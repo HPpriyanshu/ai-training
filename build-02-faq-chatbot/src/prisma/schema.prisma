@@ -18,3 +18,18 @@ model Chat {
   content String
   createdAt DateTime @default(now())
 }
+
+model Feedback {
+  id String @id @default(uuid())
+  question String
+  answer String
+  helpful Boolean
+  createdAt DateTime @default(now())
+}
+
+model Unanswered {
+  id String @id @default(uuid())
+  sessionId String
+  question String
+  createdAt DateTime @default(now())
+}

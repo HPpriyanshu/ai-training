@@ -7,7 +7,7 @@ export const formatFaq = (): string => {
         result += `\ncategory: ${category}\n`
 
         faqs.forEach((faq) => {
-            result += `Q: ${faq.question}\nA: ${faq.answer}\n`
+            result += `Q: ${faq.questions}\nA: ${faq.answer}\n`
         })
     }
 

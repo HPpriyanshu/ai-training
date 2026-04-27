@@ -119,6 +119,16 @@ export const processChat = async (sessionId: string, message: string, correlatio
         onChunk(buffer)
     }
 
+    //! track unanswered question
+    if(fullResponse.includes("Sorry, I can only answer questions related to our FAQ")){
+        await prisma.unanswered.create({
+            data : {
+                sessionId,
+                question : message
+            }
+        })
+    }
+
     //! count output token
     const outputTokens = countTokens(fullResponse)
 
@@ -179,6 +189,110 @@ export const processChat = async (sessionId: string, message: string, correlatio
 
     //! reset TTL
     await redis.expire(sessionId, 86400)
+}
+
+//! get topic
+export const getTopicService = async () => {
+    return Object.keys(FAQs)
+}
+
+//! submit feedback
+export const submitFeedbackService = async (question: string, answer: string, helpful: boolean) => {
+
+    //! store in db
+    await prisma.feedback.create({
+        data : {
+            question,
+            answer,
+            helpful
+        }
+    })
+
+    //! store in redis
+    const key = "faq:feedback:stats"
+
+    if(helpful){
+        await redis.incr(`${key}:helpful`)
+    }else{
+        await redis.incr(`${key}:notHelpful`)
+    }
+
+    await redis.incr(`${key}:total`)
+
+    return {
+        message : "Feedback successfully submitted"
+    }
+}
+
+//! get anaytics
+export const getAnalyticsService = async ({page, limit, helpful}: {page : number, limit : number, helpful? :boolean}) => {
+
+    const skip = (page - 1) * limit
+
+    const whereCondition = helpful !== undefined ? {helpful} : {}
+    
+    //! Stats from redis
+    const [totalR, helpfulR, notHelpfulR] = await Promise.all([
+        redis.get("faq:feedback:stats:total"),
+        redis.get("faq:feedback:stats:helpful"),
+        redis.get("faq:feedback:stats:notHelpful")
+    ])
+
+    const redisStats = {
+        total : Number(totalR || 0),
+        helpful : Number(helpfulR || 0),
+        notHelpful : Number(notHelpfulR || 0)
+    }
+
+    //! stats from DB
+    const [totalDB, helpfulDB, notHelpfulDB] = await Promise.all([
+        prisma.feedback.count(),
+        prisma.feedback.count({where : { helpful : true}}),
+        prisma.feedback.count({where : { helpful : false}})
+    ])
+
+    const dbStats = {
+        total : totalDB,
+        helpful : helpfulDB,
+        notHelpful : notHelpfulDB
+    }
+
+    //! last 5 feedback
+    const [recentFeedback, total] = await Promise.all([
+        prisma.feedback.findMany({
+            where : whereCondition,
+            orderBy : {
+                createdAt : "desc"
+            },
+            skip,
+            take : limit
+        }),
+        prisma.feedback.count({
+            where : whereCondition,
+            skip,
+            take : limit
+        })
+    ]) 
+
+    //! unanswered question
+    const unanswered = await prisma.unanswered.findMany({
+        orderBy : {
+            createdAt : "desc"
+        },
+        skip,
+        take : limit
+    })
+
+    return {
+        redis : redisStats,
+        database : dbStats,
+        recentFeedback,
+        unanswered,
+        page,
+        limit,
+        total,
+        totalPages : Math.ceil(total / limit)
+    }
 }
 
 //! get history

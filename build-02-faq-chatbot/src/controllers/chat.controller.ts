@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { deleteHistoryService, getHistoryService, getUsageService, processChat } from "../services/chat.service.js";
+import { deleteHistoryService, getAnalyticsService, getHistoryService, getTopicService, getUsageService, processChat, submitFeedbackService } from "../services/chat.service.js";
 import { unmaskPII } from "../utils/pii-mask-unmask.js";
 
 type chatBody = {
@@ -14,6 +14,12 @@ type paramsType = {
 type queryType = {
     page?: string,
     limit?: string
+}
+
+type feedBack = {
+    question : string,
+    answer : string,
+    helpful : boolean
 }
 
 export const chatStream = async (req: FastifyRequest<{ Body: chatBody }>, reply: FastifyReply) => {
@@ -65,14 +71,71 @@ export const chatStream = async (req: FastifyRequest<{ Body: chatBody }>, reply:
     }
 }
 
+//! get topic
+export const getTopicController = async (req : FastifyRequest, reply: FastifyReply) => {
+    try {
+        const data = await getTopicService()        
+
+        return reply.code(200).send(data)
+    } catch (error) {
+        req.log.error({error}, "Topic fetch error")
+        return reply.code(500).send({error : "Failed to fetch topic"})
+    }
+}
+
+//! submit feedback
+export const submitFeedbackController = async (req : FastifyRequest<{Body : feedBack}>, reply : FastifyReply) => {
+    try {
+        const {question, answer, helpful} = req.body
+
+        const data = await submitFeedbackService(question, answer, helpful)
+
+        return reply.code(200).send(data)
+    } catch (error) {
+        req.log.error({error}, "Submit feedback error")
+        return reply.code(500).send({error : "Feedback submission error"})
+    }
+}
+
+//! get analytics
+export const getAnalyticsController = async (req : FastifyRequest<{Querystring : {page? : string, limit? : string, helpful?: string}}>, reply : FastifyReply) => {
+    try {
+        // const page = req.query.page ? Number(req.query.page) :  1
+        // const limit = req.query.limit ? Number(req.query.limit) : 10
+        // const helpful = req.query.helpful === "true" ? true : req.query.helpful === "false" ? false : undefined
+
+        const {page = '1', limit = '10', helpful} = req.query
+        const pageNumber = Number(page)
+        const limitNumber = Number(limit)
+        const helpfulBool =
+            helpful === "true"
+            ? true
+            : helpful === "false"
+            ? false
+            : undefined
+
+        const params = {
+            page : pageNumber,
+            limit : limitNumber,
+            ...(helpfulBool !== undefined && { helpful: helpfulBool })
+        }    
+        
+        const data = await getAnalyticsService(params)
+
+        return reply.code(200).send(data)
+        
+    } catch (error) {
+        req.log.error({error}, "Analytics fetch error")
+        return reply.code(500).send({error : "Failed to fetch analytics"})
+    }
+}
+
 //! get history
 export const getHistoryController = async (req: FastifyRequest<{ Params: paramsType, Querystring: queryType }>, reply: FastifyReply) => {
 
     try {
 
         const sessionId = req.params.sessionId
-        console.log(req.params, "        paramssss")
-        console.log(sessionId, "     reydecjoiewvehebfduehihe")
         const { page = '1', limit = '10' } = req.query
 
         req.log.info({ sessionId }, "Fetching chat history")
