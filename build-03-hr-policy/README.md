@@ -1,30 +1,30 @@
-# Build 02: FAQ Chatbot
+# Build 03: HR Policy Chatbot (RAG Pipeline)
 
-This module focuses on building a Knowledge-Based Chatbot capable of answering Frequently Asked Questions (FAQs) by retrieving relevant information from a pre-defined source.
+This module focuses on building a Knowledge-Based Chatbot capable of answering HR Policy questions by retrieving relevant information from ingested documents using a Retrieval-Augmented Generation (RAG) pipeline.
 
-## 🌟 Goals for Build 02
+## 🌟 Goals for Build 03
 
-- **Knowledge Retrieval**: Implement a mechanism to search through a collection of FAQ entries.
-- **Contextual Responses**: Use an LLM to refine the retrieved FAQ answer so it fits naturally into the conversation.
-- **Efficient Lookup**: Use Redis or a Database to quickly find the best match for a user's query.
+- **Document Ingestion**: Implement a mechanism to parse and ingest PDF documents.
+- **Embedding Optimization**: Generate vector embeddings for the ingested text and store them efficiently using PostgreSQL and `pgvector`.
+- **RAG Pipeline**: Use Vector Search to quickly find the best match for a user's query and use an LLM to refine the retrieved context so it fits naturally into the conversation.
+- **Strict Guardrails**: Ensure the LLM strictly relies on the provided context, gracefully handling out-of-scope, ambiguous, or multi-part questions.
 
 ## 🏗️ Current State
 
-This project has been scaffolded from **Build 01** to maintain a consistent architecture:
+This project has been scaffolded from **Build 02** to maintain a consistent architecture, with the addition of a vector database:
 - **Fastify** for the API layer.
 - **Pino** for structured logging.
 - **Redis** for session memory and rate limiting.
-- **Prisma** for persistent storage.
+- **Prisma** with **PostgreSQL (`pgvector`)** for persistent vector storage and similarity search.
+- **OpenAI** for embedding generation and conversational AI.
 
 ## 📝 Prompt Template System
 
 The chatbot uses a robust template system to manage and build system prompts dynamically:
 
-- **Template Storage**: System prompts are stored as `.txt` files in `src/prompts/` (e.g., `faq.system.txt`).
-- **Loading & Building**: The `src/utils/prompt-loader.ts` utility handles:
-    - `loadPrompt(fileName)`: Reads the template from the filesystem with an internal cache for performance.
-    - `buildPrompt(template, variables)`: Injects dynamic values into placeholders (e.g., `{{faq_content}}`, `{{company_name}}`).
-- **FAQ Content**: The `formatFaq()` utility generates a structured representation of the FAQ data to be injected into the system prompt.
+- **Template Storage**: System prompts are stored as `.txt` files in `src/prompts/` (e.g., `rag.system.txt`).
+- **Loading & Building**: The `src/utils/prompt-loader.ts` utility handles reading the template from the filesystem and injecting dynamic values into placeholders (e.g., `{{company_name}}`, `{{context}}`).
+- **Strict Rules**: The system prompt explicitly dictates grounding, behavior, question clarification, and how to handle out-of-scope or gibberish input.
 
 ## 🛡️ Guardrail Layers
 
@@ -42,15 +42,8 @@ To ensure safety, privacy, and reliability, the application implements a multi-l
 
 ### 3. Resource & Output Guardrails
 - **Token Usage Limits**: Tracks and enforces a hard limit on total tokens consumed per session.
-- **Strict Formatting**: Ensures the assistant follows specific behavior rules (e.g., never guessing, rephrasing answers).
-- **Unanswered Tracking**: Logs questions that couldn't be answered by the FAQ for manual review and knowledge base improvement.
-
-
-## 🚀 How to Transition
-
-1.  **Define FAQs**: Create a source of truth for your questions and answers (JSON or Database).
-2.  **Implement Search**: Create a service to find the most relevant FAQ entry based on the user's message.
-3.  **Update Prompting**: Adjust the system prompt to instruct the LLM to use the provided FAQ context to answer.
+- **Strict Grounding**: The LLM is explicitly instructed to never guess, to strictly base answers on the provided context, and to refuse answering out-of-scope questions.
+- **Unanswered Tracking**: Logs questions that couldn't be answered by the context for manual review and knowledge base improvement.
 
 ---
 
