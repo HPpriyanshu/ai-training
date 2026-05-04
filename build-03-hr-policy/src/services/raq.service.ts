@@ -17,10 +17,10 @@ export const processRAGChat = async (sessionId : string, question : string, corr
     //* retrive chunks
     const chunks = await retrievRelevantService(question)
 
-    if(!chunks.length){
-        onChunk("I could not find this in the document")
-        return
-    }
+    // if(!chunks.length){
+    //     onChunk("I could not find this in the document")
+    //     return
+    // }
 
     //* build context
     const context = chunks.map((c,i) => `Source ${i + 1} (Page ${c.page}, ${c.section}):\n${c.content}`).join("\n\n")

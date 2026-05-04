@@ -177,7 +177,7 @@ export const processDocument = async (file : fileInput) => {
             const vectorString = `[${embedding?.join(",")}]`
 
             await prisma.$executeRaw`
-            INSERT INTO "Chunk" (id, content, page, section, embedding, "embeddingModel", "documentId")
+            INSERT INTO "Chunk" (id, content, page, section, embedding, "embeddingModel", "documentId", content_tsv)
             VALUES(
                 ${randomUUID()},
                 ${batch[j]?.content},
@@ -185,7 +185,8 @@ export const processDocument = async (file : fileInput) => {
                 ${batch[j]?.section},
                 ${vectorString}::vector,
                 'text-embedding-3-small',
-                ${document.id}
+                ${document.id},
+                to_tsvector('english', ${batch[j]?.content})
             )`
         }
     }

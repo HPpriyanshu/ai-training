@@ -5,6 +5,7 @@ import { maxLengthMiddleware } from "../middleware/max-length.middleware.js";
 import { moderationMiddleware } from "../middleware/moderation.middleware.js";
 import { rateLimitMiddleware } from "../middleware/rate-limit.middleware.js";
 import { piiMaskMiddleware } from "../middleware/pii-mask.middleware.js";
+import { runEvalController } from "../controllers/eval.controller.js";
 
 export async function ragRoutes(fastify : FastifyInstance){
     fastify.post("/ingest", ingestDocument)
@@ -13,4 +14,6 @@ export async function ragRoutes(fastify : FastifyInstance){
     fastify.delete("/delete-document/:docId", deleteDocumentController)
     fastify.get("/get-history/:sessionId", getChatHistoryController)
     fastify.delete("/delete-history/:sessionId", deleteChatHistory)
+
+    fastify.get("/eval", runEvalController)
 }

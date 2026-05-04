@@ -33,6 +33,9 @@ model Chunk {
   documentId String
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  //* for keyboard search
+  content_tsv Unsupported("tsvector")
+
   createdAt DateTime @default(now())
 }
 

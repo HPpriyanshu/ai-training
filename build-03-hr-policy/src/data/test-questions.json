@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "question": "how many leaves do i get",
+    "expected_answer": "12 earned leaves and 9 sick leaves",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 2,
+    "question": "how many sick leaves are allowed",
+    "expected_answer": "9 sick leaves annually",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 3,
+    "question": "what is remote work policy",
+    "expected_answer": "expectations for employees working outside the office",
+    "expected_section": "Remote Work Policies"
+  },
+  {
+    "id": 4,
+    "question": "how does work from home work",
+    "expected_answer": "eligibility, expectations, communication, evaluation",
+    "expected_section": "Remote Work Policies"
+  },
+  {
+    "id": 5,
+    "question": "how does wfh work",
+    "expected_answer": "remote work policy guidelines",
+    "expected_section": "Remote Work Policies"
+  },
+  {
+    "id": 6,
+    "question": "what are communication guidelines for remote employees",
+    "expected_answer": "tools, check-ins, reporting",
+    "expected_section": "Remote Work Policies"
+  },
+  {
+    "id": 7,
+    "question": "how are remote employees evaluated",
+    "expected_answer": "feedback, performance reviews, goal setting",
+    "expected_section": "Remote Work Policies"
+  },
+  {
+    "id": 8,
+    "question": "what are working hours",
+    "expected_answer": "10:00 AM to 7:00 PM",
+    "expected_section": "Working Hours and Attendance Policies"
+  },
+  {
+    "id": 9,
+    "question": "do employees work on weekends",
+    "expected_answer": "weekends off unless emergency",
+    "expected_section": "Working Hours and Attendance Policies"
+  },
+  {
+    "id": 10,
+    "question": "how is attendance tracked",
+    "expected_answer": "biometric or tracking tools",
+    "expected_section": "Working Hours and Attendance Policies"
+  },
+  {
+    "id": 11,
+    "question": "what is leave policy",
+    "expected_answer": "earned leave and sick leave",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 12,
+    "question": "are sick leaves allowed in probation",
+    "expected_answer": "yes, sick leaves allowed during probation",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 13,
+    "question": "what happens if i take more than 2 sick leaves",
+    "expected_answer": "medical document required",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 14,
+    "question": "explain company rules",
+    "expected_answer": "policies like recruitment, leave, remote work",
+    "expected_section": "Company Policies"
+  },
+  {
+    "id": 15,
+    "question": "what are company guidelines",
+    "expected_answer": "policies guiding employee behavior",
+    "expected_section": "Company Policies"
+  },
+  {
+    "id": 16,
+    "question": "how company policies work",
+    "expected_answer": "policies provide guidance, compliance, and structure",
+    "expected_section": "Company Policies"
+  },
+  {
+    "id": 17,
+    "question": "how much leave can i take in one day",
+    "expected_answer": "not specified but annual leave defined",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 18,
+    "question": "what is daily leave limit",
+    "expected_answer": "not specified but leave policy exists",
+    "expected_section": "Leave Policies"
+  },
+  {
+    "id": 19,
+    "question": "what is company revenue",
+    "expected_answer": "not found",
+    "expected_section": "NONE"
+  },
+  {
+    "id": 20,
+    "question": "how do employees work outside office",
+    "expected_answer": "remote work policy",
+    "expected_section": "Remote Work Policies"
+  }
+]

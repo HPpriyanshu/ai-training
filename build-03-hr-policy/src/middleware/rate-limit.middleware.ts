@@ -12,7 +12,7 @@ export const rateLimitMiddleware = async (req : FastifyRequest<{Body : {sessionI
         await redis.expire(chatLimitKey, 86400)
     }
 
-    const DAILY_LIMIT = 100
+    const DAILY_LIMIT = 150
 
     if(currentCode > DAILY_LIMIT){
         await redis.incr(`abuse:${sessionId}`)
