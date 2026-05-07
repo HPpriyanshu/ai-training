@@ -1,7 +1,7 @@
 {
-  "name": "build-02-faq-chatbot",
+  "name": "build-05-ai-agent",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI Agent with Tool Calling",
   "type": "module",
   "scripts": {
     "build": "tsc",
