@@ -1,0 +1,1 @@
+export const sessionLogs: Record<string, any[]> = {}
