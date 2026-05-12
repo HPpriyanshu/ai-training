@@ -1,40 +1,67 @@
-# Build 05: AI Agent with Tool Calling (Basic)
+# Build 06: Modular MCP Architecture (Tool Calling + MCP)
 
-This module focuses on building an AI Agent capable of interacting with external systems and databases using **Tool Calling** (also known as Function Calling). Unlike a standard chatbot that relies solely on pre-existing knowledge or retrieved text (RAG), this agent can take active actions—fetching real-time data or creating records—to solve user queries.
+This module advances the AI Agent by introducing the **Model Context Protocol (MCP)** and a highly modular, multi-server architecture. Instead of a monolithic agent, this build demonstrates how to scale an AI system by separating tools and data into independent, pluggable MCP servers.
 
-## 🤖 What is an AI Agent?
+## 🤖 What is Model Context Protocol (MCP)?
 
-An **AI Agent** is an artificial intelligence system that can perceive its environment, make decisions, and take actions to achieve a specific goal. In the context of LLMs, an agent goes beyond generating text; it acts as an intelligent orchestrator that can break down a user's request, determine which external tools or APIs it needs to fulfill the request, execute those tools, and synthesize the results into a cohesive response.
+**Model Context Protocol (MCP)** is an open standard that enables AI models to seamlessly connect to data and tools across different services and servers. It provides a standardized way for "Clients" (like our main application) to talk to "Servers" (which host the tools and data) over a unified protocol.
 
-## 🛠️ What is Tool Calling?
+In this build, we transition from hardcoded tools to a **Modular MCP Architecture**, allowing for independent scaling and management of different domains (e.g., CRM, Support, Inventory).
 
-**Tool Calling** (or Function Calling) is the mechanism that empowers an AI Agent to interact with the outside world.
-Instead of the LLM guessing an answer or saying "I don't have access to real-time data", we define a set of specific functions (tools) the LLM can use.
-When the user asks a question, the LLM determines if a tool is needed. If so, it responds with the *intention* to call a tool, along with the required arguments. The application executes the tool (e.g., querying a database or an API) and feeds the result back to the LLM to generate the final answer.
+## 🏗️ Folder Structure & Architecture
 
-## 🌟 Goals for Build 05
+We have implemented a clean separation of concerns using the following modular structure:
 
-- **Understand Agentic Workflows**: Learn how to transition from a passive chatbot to an active, goal-oriented agent.
-- **Implement Tool Calling**: Define structured tools using OpenAI's function calling schema.
-- **Action Execution**: Safely execute functions in the backend based on the LLM's requests.
-- **Multi-Step Reasoning**: Enable the LLM to call multiple tools sequentially or in parallel to solve complex queries.
+```text
+src/
+├── mcp/
+│   ├── client/           # Central Client Manager, Tool Registry, and Routing
+│   │   ├── client-manager.service.ts
+│   │   ├── tool-registry.service.ts
+│   │   └── tool-router.service.ts
+│   │
+│   └── crm/              # Modular CRM MCP Server
+│       ├── tools/        # Tool definitions (JSON Schemas)
+│       ├── handlers/     # Business logic for tool execution
+│       ├── registry/     # Tool and Handler registries
+│       └── server.ts     # The MCP Server entry point
+│
+├── controllers/          # Fastify Controllers
+├── routes/               # API Routing (Agent & MCP Status)
+└── services/             # Core Agent and OpenAI integration
+```
 
-## 🏗️ Available Tools in this Build
+## 🛠️ Key Components
 
-This agent is equipped with several tools to manage customer support workflows:
+### 1. Client Manager (`src/mcp/client/`)
+The **Client Manager** is the heart of the system. It:
+- Manages multiple background MCP server processes.
+- Dynamically connects to servers via `StdioClientTransport`.
+- Aggregates tools from **all** connected servers into a single registry for the AI.
+- Routes tool calls to the correct server based on the requested tool name.
 
-- `search_customers`: Search for a customer by name or email.
-- `get_order_status`: Check the status of a specific order.
-- `get_customer_orders`: Retrieve all orders for a specific customer.
-- `create_support_ticket`: Create a new support ticket (Requires confirmation for safety).
-- `get_single_support_ticket`: Fetch details of a specific support ticket.
-- `get_support_tickets`: Retrieve all support tickets for a specific customer.
+### 2. CRM MCP Server (`src/mcp/crm/`)
+An independent server that follows the MCP standard. It encapsulates all CRM-related tools (`lookup_customer`, `get-orders`) and their handlers. Because it's a separate server, it can be tested, deployed, and scaled independently of the main agent.
+
+## 🚀 Goals for Build 06
+
+- **Master MCP Fundamentals**: Learn how to use the `@modelcontextprotocol/sdk` to build servers and clients.
+- **Implement Multi-Server Routing**: Connect and coordinate multiple MCP servers within a single agent session.
+- **Modularize Tools**: Transition from a flat tool structure to domain-specific modular servers.
+- **Dynamic Discovery**: Enable the AI to automatically discover and use tools as servers are connected.
+
+## 🛠️ Available Tools (CRM Server)
+
+- `lookup_customer`: Search for customer details by name, email, or ID.
+- `get-orders`: Retrieve all orders for a specific customer.
 
 ## 🚀 Tech Stack
 
-- **Fastify** for the API layer.
-- **OpenAI API** for the LLM and tool calling orchestration.
-- **TypeScript** for type-safe tool definitions and execution.
+- **Fastify**: High-performance web framework for the API layer.
+- **OpenAI API**: For LLM orchestration and intelligent tool calling.
+- **Prisma**: For persistent storage of chat history and logs.
+- **@modelcontextprotocol/sdk**: The official SDK for building MCP clients and servers.
+- **TypeScript**: For type-safe development across the modular architecture.
 
 ---
 
