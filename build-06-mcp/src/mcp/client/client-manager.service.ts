@@ -24,7 +24,7 @@ export const connectServer = async (id: string, command: string, args: string[])
         clients.set(id, { client, transport, id });
         logger.info(`Connected to MCP server: ${id}`);
     } catch (error) {
-        logger.error(`Failed to connect to MCP server ${id}:`, error);
+        logger.error({ error }, `Failed to connect to MCP server ${id}`);
         throw error;
     }
 };

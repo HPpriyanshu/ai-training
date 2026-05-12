@@ -49,5 +49,9 @@ export const createAgentCompletion = async (messages : any[], tools : any[]) => 
         tools
     })
 
-    return response.choices[0].message
+    const message = response.choices[0]?.message;
+    if (!message) {
+        throw new Error("OpenAI returned an empty response choices.");
+    }
+    return message;
 }

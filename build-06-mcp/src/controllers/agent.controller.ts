@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { getSessionLogs, getToolService, processAgentChat } from "../services/agent.service";
-import { unmaskPII } from "../utils/pii-mask-unmask";
+import { getSessionLogs, getToolService, processAgentChat } from "../services/agent.service.js";
+import { unmaskPII } from "../utils/pii-mask-unmask.js";
 import { getConnectedServer } from "../services/agent.service.js";
 
 export const processAgentChatController = async (req : FastifyRequest<{Body : {question : string, sessionId : string}}>, reply : FastifyReply) => {
