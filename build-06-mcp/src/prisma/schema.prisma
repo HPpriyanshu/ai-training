@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// model Document {
+//   id String @id @default(uuid())
+//   filename String
+//   fileHash String @unique
+
+//   uploadedAt DateTime @default(now())
+
+//   chunks Chunk[]
+// }
+
+// model Chunk {
+//   id String @id @default(uuid())
+//   content String
+//   page Int
+//   section String?
+
+//   embedding Unsupported("vector(1536)")
+//   embeddingModel String
+
+//   documentId String
+//   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+//   //* for keyboard search
+//   content_tsv Unsupported("tsvector")
+
+//   createdAt DateTime @default(now())
+// }
+
+model Chat {
+  id String @id @default(uuid())
+  sessionId String
+  role String
+  content String
+
+  createdAt DateTime @default(now())
+}
