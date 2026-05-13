@@ -8,34 +8,35 @@ This repository is structured as a collection of **Independent Projects**. Each 
 
 ### Why this structure?
 - **Isolation**: Each lab can be run, tested, and deployed independently.
-- **Progression**: Follow the sequence from `01` to `10` to build increasingly complex systems.
+- **Progression**: Follow the sequence from `01` to `06` to build increasingly complex systems.
 - **Template-Based**: Every lab follows a standardized architecture for production readiness.
 
 ## 📁 Roadmap
 
 | Build | Module Name | Focus Area |
 | :--- | :--- | :--- |
-| **01** | [Streaming LLM](./build-01-streaming-llm) | SSE, Redis Caching, Token Management |
-| **02** | FAQ Chatbot | RAG, Vector Search, Semantic Logic |
-| **03** | RAG Pipeline | Document Ingestion, Embedding optimization |
-| **...** | ... | ... |
-| **10** | Graduation | Full AI Agentic Workflow |
+| **01** | [Streaming LLM](./build-01-streaming-llm) | Server-Sent Events (SSE), Redis Caching, Stream Buffering. |
+| **02** | [FAQ Chatbot](./build-02-faq-chatbot) | System Prompt Engineering, Static Context Injection. |
+| **03** | [HR Policy RAG](./build-03-hr-policy) | Complex Document Processing, PDF Parsing, Embedding Optimization. |
+| **05** | [AI Agent (Basic)](./build-05-ai-agent) | Introduction to Tool Calling, Multi-step reasoning, Action Execution. |
+| **06** | [Modular MCP Agent](./build-06-mcp) | Model Context Protocol (MCP), Modular MCP Servers, Client Management. |
 
 ## 🛠️ Global Prerequisites
 
 Before starting any lab, ensure you have the following installed:
 1.  **Node.js** (v20+ recommended)
 2.  **Docker Desktop** (Required for Redis and PostgreSQL)
-3.  **pnpm** (or npm/yarn)
+3.  **tsx** or **nodemon** (for local development)
+4.  **Prisma CLI** (`npx prisma`)
 
 ## 🚀 Getting Started
 
-1.  Navigate to a specific build:
-    ```bash
-    cd build-01-streaming-llm
-    ```
-2.  Follow the dedicated `README.md` inside that folder for setup instructions.
+1.  Clone this repository.
+2.  Choose a build folder (e.g., `cd build-01-streaming-llm`).
+3.  Copy `.env.example` to `.env` and fill in your API keys.
+4.  Install dependencies: `npm install`.
+5.  Run the development server: `npm run dev`.
 
 ---
 
-*Developed with ❤️ for high-performance AI Engineering.*
+*Part of the AI Training Series.*
